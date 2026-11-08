@@ -1,31 +1,8 @@
-# my_project
+# Smart Home REST API
 
-A project created with FastAPI CLI.
+Приложение для управления устройствами умного дома.
 
-## Quick Start
-
-### Start the development server
-
+## Запуск
 ```bash
-uv run fastapi dev
-```
-
-Visit http://localhost:8000
-
-### Deploy to FastAPI Cloud
-
-Sign up and log in at https://fastapicloud.com, then deploy with:
-
-```bash
-uv run fastapi deploy
-```
-
-## Project Structure
-
-- `main.py` - Your FastAPI application
-- `pyproject.toml` - Project dependencies
-
-## Learn More
-
-- [FastAPI Documentation](https://fastapi.tiangolo.com)
-- [FastAPI Cloud](https://fastapicloud.com)
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8080
