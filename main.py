@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from controllers import router
 from service import device_service
 app = FastAPI()
@@ -15,6 +16,25 @@ app = FastAPI(
 )
 
 app.include_router(router)
+
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
+@app.get("/health", tags=["Monitoring"])
+def health():
+    return {
+        "status": "ok",
+        "service": "smart-home-api",
+        "version": "2.0.0",
+    }
+
+@app.get("/info", tags=["Monitoring"])
+def info():
+    return {
+        "app": "Smart Home API",
+        "version": "2.0.0",
+        "developer": "Brigada 2",
+        "stack": "FastAPI + Python",
+    }
 
 @app.get("/", response_class=HTMLResponse)
 def root():
@@ -40,6 +60,12 @@ def root():
       </head>
       <body>
         <h1>Устройства умного дома</h1>
+        <p>
+          <a href="/docs">Swagger UI</a> |
+          <a href="/metrics">Prometheus /metrics</a> |
+          <a href="/health">/health</a> |
+          <a href="/info">/info</a>
+        </p>
         <table>
           <tr><th>ID</th><th>Название</th><th>Тип</th>
               <th>Комната</th><th>Вкл</th><th>Значение</th></tr>

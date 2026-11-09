@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict
 
 class Device(BaseModel):
     id: Optional[int] = Field(default=None, description="Уникальный идентификатор")
@@ -17,3 +17,13 @@ class DeviceUpdate(BaseModel):
     room: str
     power_on: bool
     value: float
+
+class DeviceWithLinks(Device):
+    links: Dict[str, str] = {}
+
+class DeviceResponse(BaseModel):
+    message: str
+    data: Device
+
+class MessageResponse(BaseModel):
+    message: str
