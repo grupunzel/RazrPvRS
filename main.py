@@ -1,23 +1,35 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI
 from fastapi.responses import HTMLResponse
 from prometheus_fastapi_instrumentator import Instrumentator
-from controllers import router
-from service import device_service
-app = FastAPI()
+from sqlalchemy.orm import Session
 
-@app.get("/")
-def main():
-    return {"message": "Hello World"}
+import crud
+import db_models  # noqa: F401  — регистрирует таблицы в Base.metadata
+from config import settings
+from controllers import router
+from database import Base, engine, get_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Автосоздание таблиц при старте (в проде лучше Alembic)
+    Base.metadata.create_all(bind=engine)
+    yield
+
 
 app = FastAPI(
-    title="Smart Home API",
+    title=settings.app_name,
     description="REST API для управления устройствами умного дома",
-    version="1.0.0",
+    version="2.0.0",
+    lifespan=lifespan,
 )
 
 app.include_router(router)
 
 Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
 
 @app.get("/health", tags=["Monitoring"])
 def health():
@@ -25,7 +37,9 @@ def health():
         "status": "ok",
         "service": "smart-home-api",
         "version": "2.0.0",
+        "env": settings.app_env,
     }
+
 
 @app.get("/info", tags=["Monitoring"])
 def info():
@@ -33,12 +47,14 @@ def info():
         "app": "Smart Home API",
         "version": "2.0.0",
         "developer": "Brigada 2",
-        "stack": "FastAPI + Python",
+        "stack": "FastAPI + Python + PostgreSQL",
+        "env": settings.app_env,
     }
 
+
 @app.get("/", response_class=HTMLResponse)
-def root():
-    devices = device_service.read_all()
+def root(db: Session = Depends(get_db)):
+    devices = crud.get_all(db)
     rows = "".join(
         f"<tr><td>{d.id}</td><td>{d.name}</td><td>{d.type}</td>"
         f"<td>{d.room}</td><td>{d.power_on}</td><td>{d.value}</td></tr>"
